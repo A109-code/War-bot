@@ -22,6 +22,7 @@ client=discord.Client(intents=intents)
 my_secret = os.environ['!F!J']
 display_shop = {"🪖 soldier 🪖": 100, "⛵ sailor ⛵":100,"<:pistol:891380898275135498>gun<:pistol:891380898275135498>":50, "<:machinegun:891401257514860555>machine gun<:machinegun:891401257514860555>":75,"<:assaultrifle:891408408371167242>assault rifle<:assaultrifle:891408408371167242>":85,"<:sniperrifle:891407196200509440>sniper rifle<:sniperrifle:891407196200509440>":100,"🛥 boat 🛥":200,"🛳️ ship 🛳️":1000}
 shop = {"soldier": 100, "sailor":100,"gun":50, "machine gun":75,"assault rifle":85,"sniper rifle":100,"boat":200,"ship":1000}
+
 RedInven=[]
 if "RedInven" in db.keys():
 	RedInven = db["RedInven"]
@@ -33,18 +34,24 @@ if "BlueInven" in db.keys():
 else:
 	db["BlueInven"]=BlueInven
 	BlueBuilds={}
+if "playerstats" in db.keys():
+	playerstats = db["playerstats"]
+else:
+	playerstats = {}
+	db["playerstats"] = playerstats
 async def STUFF(message):
 	response = requests.get("https://www.boredbutton.com/random")
 	json_data=json.loads(response)
 
 	await client.delete_message(message)
 	return(json_data)
-
 	messssss='%alarm {1.mention}30 Red Trench Complete!'.format(message,text_channel)
+
 async def dm(userID):
 	await client.wait_until_ready()
 	user = await client.fetch_user(userID)
 	await user.send('Filler Text')
+
 class UpdateRCur():
 	if "RedMoney" in db.keys():
 		global RedCurrency
@@ -75,6 +82,7 @@ class UpdateBCur():
 		global BlueCurrency
 		BlueCurrency+=amountBPlus
 		db["BlueMoney"]=BlueCurrency
+		
 class UpdateBInven:
 	def blueIMin(item):
 		BlueInven.remove(item)
@@ -123,8 +131,9 @@ class UpdateRInven:
 async def rolemembers(ctx,role_id):
 	role = ctx.guild.get_role(role_id)
 	return len(role.members)
+
 @commands.command(pass_context=True)
-async def shopRole(self, ctx):
+async def getteam(self, ctx):
 	role = discord.utils.get(ctx.guild.roles,name="Blue Team")
 	if role in self.roles:
 		say = 'Blue'
@@ -136,6 +145,7 @@ async def shopRole(self, ctx):
 			return say
 		else:
 			say = 'N/A'
+
 class UpdateRbuilds:
 	if "RedBuilds" in db.keys():
 		global RedBuilds
@@ -267,6 +277,7 @@ class UpdateBbuilds:
 				things.append(build)
 			items[build]=things
 		return(items)
+
 @commands.command(pass_context=True)
 async def ModRole(self, ctx):
 	role = discord.utils.get(ctx.guild.roles,name="Moderators")
@@ -276,21 +287,24 @@ async def ModRole(self, ctx):
 	else:
 		say = 'non-mod'
 		return say
+		
 @client.event
 async def shop_person(message,ident,item,author,itemcount):
 	userinput = await client.wait_for("message")
 	await shop_input(userinput,ident,item,author,itemcount)
+	
 @client.event
 async def buildadd_person(message,ident,item,author,itemcount):
 	userinput = await client.wait_for("message")
 	await buildadd_input(userinput,ident,item,author,itemcount)
+	
 @client.event
 async def buildadd_input(message,ident,item,author,itemcount):
 	if message.author.name != ident:
 		await buildadd_person(message,ident,item,author,itemcount)
 	if message.content.lower() == "y":
 		Complete=''
-		rolewhat=await shopRole(message.author,message)
+		rolewhat=await getteam(message.author,message)
 		if rolewhat=='Blue':
 			UpdateBbuilds.blueItemAdd(itemcount,item,1)
 			Complete="Complete!"
@@ -305,6 +319,7 @@ async def buildadd_input(message,ident,item,author,itemcount):
 		await message.channel.send('Action Canceled!')
 	else:
 		await message.channel.send("I don't understand your wording! START OVER!")
+		
 @client.event
 async def howmuch(message,ident,author):
 	num = await client.wait_for("message")
@@ -312,13 +327,14 @@ async def howmuch(message,ident,author):
 		howmuch(message,ident,author)
 	else:
 		return(num)
+		
 @client.event
 async def shop_input(message2,ident,item,author,itemcount):
 	if message2.author.name != ident:
 		await shop_person(message2,ident,item,author,itemcount)
 	if message2.content.lower() == "y":
 		Complete=''
-		rolewhat=await shopRole(message2.author,message2)
+		rolewhat=await getteam(message2.author,message2)
 		if rolewhat=='Blue':
 			BlueMoneyTest=BlueCurrency
 			BlueMoneyTest-=shop.get(item)*int(str(itemcount.content))
@@ -383,12 +399,12 @@ async def midnight():
 		BlueCurrency+=200
 		RedCurrency+=200
 		pastdate=currentdate
+		
 @client.event
 async def on_ready():
 	res=DiscordComponents(client)
 	print('We have logged in as {0.user}'.format(client))
 	await midnight()
-
 
 @client.event
 async def on_message(message):
@@ -500,14 +516,6 @@ async def on_message(message):
 			await channel.send(msg)
 		else:
 			await message.channel.send('I dunno what your talking about')
-	if message.content.startswith("!doin"):
-		randomthing = random.randint(1, 2)
-		if randomthing == 1:
-			await message.channel.send(file=discord.File(r'doin1.mp3'))
-		if randomthing == 2:
-			await message.channel.send(file=discord.File(r'doin2.mp3'))
-	if message.content.startswith("!wow"):
-		await message.channel.send(file=discord.File(r'sus.mp4'))
 	if message.content.startswith("!easter") or message.content.startswith("!eater"):
 		await message.channel.send("🥚 Eater eggs! 🥚🥚 Eater eggs! 🥚")
 	if message.content.startswith('!message'):
@@ -567,7 +575,7 @@ async def on_message(message):
 			equip.remove('!equip')
 			equiptowhat=equip[0]
 			equipwhat=equip[1]
-			whatrole=await shopRole(message.author,message)
+			whatrole=await getteam(message.author,message)
 			if whatrole=='Blue':
 				inven=BlueInven
 				if equiptowhat in inven:
@@ -632,11 +640,6 @@ async def on_message(message):
 					UpdateRInven.redIMin(bought)
 		except:
 			await message.channel.send('Errorsss') 
-	if message.content.startswith("!battle"):
-		if await shopRole(message.author,message) == "Blue":
-			embed = discord.Embed()
-			embed.add_field(name="x",value="o")
-			await message.channel.send(embed=embed)
 	if message.content.startswith("!dm"):
 		user_id=message.content.split(" ",1)[1]
 		user_id=user_id.translate({ord(i): None for i in '<>@!'})
@@ -668,7 +671,7 @@ async def on_message(message):
 	if message.content.startswith("!buildadd"):
 		build=message.content.split("!buildadd ",1)[1]
 		print(build)
-		role=await shopRole(message.author,message)
+		role=await getteam(message.author,message)
 		if role=="Blue":
 			buildinven=await UpdateBbuilds.blueIo()
 		elif role=="Red":
@@ -713,5 +716,16 @@ async def on_message(message):
 		await message.channel.send(embed=embed)
 	if message.content.startswith("!hash"):
 		await message.channel.send('<#892958145868083230>')
+	if message.content.lower().startswith("!initiateplayerstats"):
+		if await ModRole(message.author, message) == "Mod":
+			for i in [m for m in message.guild.members if not m.bot]:
+				whichteam = await Role(i, message)
+				name = str(i)
+				playerstats[name] = [100, whichteam]
+				db["playerstats"] = playerstats
+			print(playerstats)
+			await message.channel.send("Playerstats successfully initiated. Here is the current value: " + str(playerstats))
+		else:
+			await message.channel.send("You are not allowed to use that command!")
 keep_alive()
 client.run(my_secret)
